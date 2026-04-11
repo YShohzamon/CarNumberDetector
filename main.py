@@ -5,7 +5,7 @@ import os
 
 # 1. To'g'ri papkani ko'rsatamiz (Logingizga qarab)
 # Eslatma: Agar papka raqami o'zgargan bo'lsa, pastdagi yo'lni to'g'rilang
-model_path = 'runs/detect/runs/detect/car_number_model4/weights/best.pt'
+model_path = 'runs/detect/car_number_model4/weights/best.pt'
 
 if not os.path.exists(model_path):
     print("Xato: Model fayli topilmadi! Iltimos runs/detect/... ichini tekshiring.")
