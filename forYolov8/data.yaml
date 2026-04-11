@@ -1,0 +1,7 @@
+path: /home/yshohzamon/MyWorks/localGithub/AIProjects/CarNumberDetector/forYolov8
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 2
+names: ['license-plate', 'vehicle']

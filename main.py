@@ -1,38 +1,52 @@
 import cv2
 import easyocr
+from ultralytics import YOLO
 import os
 
-# 1. OCR modelini sozlash
-reader = easyocr.Reader(['en'])
+# 1. To'g'ri papkani ko'rsatamiz (Logingizga qarab)
+# Eslatma: Agar papka raqami o'zgargan bo'lsa, pastdagi yo'lni to'g'rilang
+model_path = 'runs/detect/runs/detect/car_number_model4/weights/best.pt'
 
-# 2. Rasm yo'li
-image_path = '973870.jpg'
-output_path = 'result_detected.jpg'
-
-if not os.path.exists(image_path):
-    print("Rasm topilmadi!")
+if not os.path.exists(model_path):
+    print("Xato: Model fayli topilmadi! Iltimos runs/detect/... ichini tekshiring.")
 else:
-    image = cv2.imread(image_path)
-    # Tasvirni kulrang qilish (OCR aniqligini oshirishi mumkin)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Modellarni yuklash
+    model = YOLO(model_path)
+    reader = easyocr.Reader(['en'])  # O'zbekiston raqamlari uchun lotincha kifoya
 
-    # 3. Matnni aniqlash
-    results = reader.readtext(gray)
+    # Test rasm yo'li (Birorta rasm qo'ying)
+    image_path = '/home/yshohzamon/MyWorks/localGithub/AIProjects/CarNumberDetector/dataset/images/Cars7.png'
 
-    for (bbox, text, prob) in results:
-        if prob > 0.5:
-            print(f"Topildi: {text} | Ishonch: {prob:.2f}")
-            
-            # Koordinatalarni olish
-            (top_left, top_right, bottom_right, bottom_left) = bbox
-            tl = tuple(map(int, top_left))
-            br = tuple(map(int, bottom_right))
-            
-            # Rasmga chizish
-            cv2.rectangle(image, tl, br, (0, 255, 0), 3)
-            cv2.putText(image, text, (tl[0], tl[1] - 10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    if os.path.exists(image_path):
+        img = cv2.imread(image_path)
+        results = model(img)
 
-    # 4. Natijani faylga saqlash (plt.show o'rniga)
-    cv2.imwrite(output_path, image)
-    print(f"Natija saqlandi: {output_path}")
+        for res in results:
+            for box in res.boxes:
+                # Koordinatalar
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                conf = box.conf[0]
+                cls = int(box.cls[0])
+
+                if res.names[cls] == 'license-plate':
+                    # Raqamni kesib olish
+                    plate_crop = img[y1:y2, x1:x2]
+
+                    # OCR orqali o'qish
+                    ocr_result = reader.readtext(plate_crop)
+
+                    plate_text = ""
+                    if ocr_result:
+                        plate_text = ocr_result[0][1]  # Eng yuqori ehtimolli matn
+
+                    print(f"Topildi: {plate_text} (Ishonch: {conf:.2f})")
+
+                    # Vizualizatsiya
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 3)
+                    cv2.putText(img, plate_text.upper(), (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        cv2.imwrite('final_test_result.jpg', img)
+        print("Natija 'final_test_result.jpg' fayliga saqlandi.")
+    else:
+        print(f"Sinov uchun rasm topilmadi: {image_path}")
