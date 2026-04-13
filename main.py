@@ -10,12 +10,9 @@ model_path = 'runs/detect/car_number_model4/weights/best.pt'
 if not os.path.exists(model_path):
     print("Xato: Model fayli topilmadi! Iltimos runs/detect/... ichini tekshiring.")
 else:
-    # Modellarni yuklash
     model = YOLO(model_path)
-    reader = easyocr.Reader(['en'])  # O'zbekiston raqamlari uchun lotincha kifoya
-
-    # Test rasm yo'li (Birorta rasm qo'ying)
-    image_path = '/home/yshohzamon/MyWorks/localGithub/AIProjects/CarNumberDetector/dataset/images/Cars7.png'
+    reader = easyocr.Reader(['en'])
+    image_path = 'data/Uzbekistan/photo_5_2026-04-11_14-25-44.jpg'
 
     if os.path.exists(image_path):
         img = cv2.imread(image_path)
@@ -23,21 +20,16 @@ else:
 
         for res in results:
             for box in res.boxes:
-                # Koordinatalar
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 conf = box.conf[0]
                 cls = int(box.cls[0])
 
                 if res.names[cls] == 'license-plate':
-                    # Raqamni kesib olish
                     plate_crop = img[y1:y2, x1:x2]
-
-                    # OCR orqali o'qish
                     ocr_result = reader.readtext(plate_crop)
-
                     plate_text = ""
                     if ocr_result:
-                        plate_text = ocr_result[0][1]  # Eng yuqori ehtimolli matn
+                        plate_text = ocr_result[0][1]
 
                     print(f"Topildi: {plate_text} (Ishonch: {conf:.2f})")
 
